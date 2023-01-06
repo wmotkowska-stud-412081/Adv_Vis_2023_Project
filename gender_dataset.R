@@ -19,7 +19,7 @@ regions <- data %>%
     distinct() %>% 
     slice(1:48)
 
-head(regions)
+regions$`Country Name`
 
 countries <- data %>% 
     select(`Country Name`, `Country Code`) %>% 
@@ -52,22 +52,53 @@ vis.data <- data %>%
         values_from = Value) %>% 
     mutate(Year = as.Date(Year, format = "%Y"))
 
-
-
 head(vis.data)
 
-#### FIRST VISUALIZATION ####
 
-description <- "\nIn the entire world the percentage of working age population has been steadily decling for 60 years. The population is growing older. \nThis is only one of the major changes that have been happening rapidly in the last centuary. The world has never changed so quickly! \nMany changes are also visible depending on gender. The inequalities are lessening. We will see that in other visualisations. \n"
 
-world <- vis.data %>% filter(`Country Code` == "WLD")
-ind <- indicators$`Indicator Name`[indicators$`Indicator Code` == "SP.POP.DPND"]
+#### VISUALIZATION FOR WHOLE WORLD ####
 
-ggplot(data = world, aes(x = Year, y = SP.POP.DPND)) +
-    labs(title = paste("World", ind),
-         subtitle = description,
-         y = str_split(ind, " ")[[1]][1]) +
+# Dataset only concerning world variables (filtering by country code)
+world <- vis.data %>% filter(`Country Code` == "WLD") 
+not.na <- world %>% is.na() %>% colSums() %>% data.frame() %>%  filter(. < 50) %>% row.names()
+world <- world %>% select(not.na)
+str(world)
+world.indicators <- indicators %>% filter(`Indicator Code` %in% not.na[-c(1,2)])
+rm(not.na)
+
+# First vis
+description <- "The dynamics in modern world are rapidly changing for women. There is more women employers in labour market."
+world.vis1 <- world %>% filter(!is.na(SL.EMP.MPYR.FE.ZS))
+ind <- world.indicators$`Indicator Name`[world.indicators$`Indicator Code` == "SL.EMP.MPYR.FE.ZS"]
+ggplot(data = world.vis1, aes(x = Year, y = SL.EMP.MPYR.FE.ZS)) +
+    labs(title = description,
+         subtitle = paste(" World:", ind),
+         y = paste("%", str_split(ind, ",")[[1]][1])) +
     scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
-    geom_point(colour = "green") +
-    theme_light()
+    geom_line(colour = "purple", linewidth = 2) +
+    theme_minimal()
 
+world.agg <- world %>% 
+              # filter(Year > "2000-01-01") %>% 
+              mutate(Years_5 = floor_date(Year, years(5))) %>% 
+              group_by(Years_5) %>% 
+              summarise_if(is.numeric, mean, na.rm = TRUE) %>% 
+              ungroup()
+
+world.vis2 <- world.agg %>% 
+    select(Years_5, SH.MMR.RISK.ZS) %>% 
+    filter(!is.na(SH.MMR.RISK.ZS))
+
+description <- "Health of women in labour is taken care of better with time."
+ind <- world.indicators$`Indicator Name`[world.indicators$`Indicator Code` == "SH.MMR.RISK.ZS"]
+ggplot(data = world.vis2, aes(x = Years_5, y = SH.MMR.RISK.ZS, 
+           fill = ifelse(Years_5 > "2010-01-01", "Highlighted", "Normal"))) +
+    geom_bar(stat = "identity") +
+    scale_fill_manual("legend", values = c("Highlighted" = "purple", "Normal" = "gray")) +
+    labs(title = description,
+         subtitle = paste("World: mean of", ind),
+         y = "Percentage",
+         x = "Years (mean of following 5 years)") +
+    theme_minimal() +
+    geom_text(aes(label = round(SH.MMR.RISK.ZS, 2)), vjust = 4, color = 'white', size = 10) + 
+    theme(legend.position = "none")   
