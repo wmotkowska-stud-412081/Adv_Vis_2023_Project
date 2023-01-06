@@ -67,7 +67,7 @@ world.indicators <- indicators %>% filter(`Indicator Code` %in% not.na[-c(1,2)])
 rm(not.na)
 
 # First vis
-description <- "The dynamics in modern world are rapidly changing for women. There is more women employers in labour market."
+description <- "The dynamics in modern world are rapidly changing for women. There is more women employers in labor market."
 world.vis1 <- world %>% filter(!is.na(SL.EMP.MPYR.FE.ZS))
 ind <- world.indicators$`Indicator Name`[world.indicators$`Indicator Code` == "SL.EMP.MPYR.FE.ZS"]
 ggplot(data = world.vis1, aes(x = Year, y = SL.EMP.MPYR.FE.ZS)) +
