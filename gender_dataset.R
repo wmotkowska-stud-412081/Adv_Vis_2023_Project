@@ -78,6 +78,8 @@ ggplot(data = world.vis1, aes(x = Year, y = SL.EMP.MPYR.FE.ZS)) +
     geom_line(colour = "purple", linewidth = 2) +
     theme_minimal()
 
+ggsave(path = "plots", filename = "vis1.png")
+
 world.agg <- world %>% 
               # filter(Year > "2000-01-01") %>% 
               mutate(Years_5 = floor_date(Year, years(5))) %>% 
@@ -102,3 +104,5 @@ ggplot(data = world.vis2, aes(x = Years_5, y = SH.MMR.RISK.ZS,
     theme_minimal() +
     geom_text(aes(label = round(SH.MMR.RISK.ZS, 2)), vjust = 4, color = 'white', size = 10) + 
     theme(legend.position = "none")   
+
+ggsave(path = "plots", filename = "vis2.png")
