@@ -255,10 +255,13 @@ edu2 <- ggplot(edu.vis, aes(x = sex, y = level)) + # nowa baza danych
   scale_fill_gradient(low = "gray", high = "black") +
   theme_light() + 
   geom_text(aes(label = round(Population)), size = 5, fontface = 'bold', color = 'white') +
-  labs(title = "Educational attainment population 25+ \n(%) (cumulative) dependent on Sex") +
+  labs(title = "Educational attainment population 25+ \n(%) (cumulative) dependent on Sex") 
   theme(panel.grid = element_blank())+
   theme(plot.background = element_rect(fill = "#f7ede1"),
         plot.title = element_text(size = 20, face = "bold"),
         text = element_text(size = 15))
 
 ggsave(path = "plots", filename = "vis5.png")
+
+rm(list = ls(pattern = "edu"))
+rm(description, ind, g)
