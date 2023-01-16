@@ -5,67 +5,74 @@ library(tidyverse)
 library(lubridate)
 library(gridExtra)
 library(treemapify)
+library(rnaturalearth)
+library(cowplot)
+library(sf)
+library(ggmap)
+library(leaflet)
+library(ggbump)
+library(wesanderson)
 
 #### DATA PREPARATION ####
 
-# 263 K rows of data
-data <- read_csv("data/Gender_StatsData.csv") %>% 
-    select(-67)
+# # 263 K rows of data
+# data <- read_csv("data/Gender_StatsData.csv") %>% 
+#     select(-67)
+# 
+# head(data)
+# 
+# data[data$`Indicator Code` == "SG.GET.JOBS.EQ",] %>% 
+#     filter(!is.na(`2010`)) %>% 
+#     select(1, 2, 3, 4, 40, 41, 42, 43)
+# 
+# # We see that data provides not only countries but also division depending on regions of world
+# 
+# regions <- data %>% 
+#     select(`Country Name`, `Country Code`) %>% 
+#     distinct() %>% 
+#     slice(1:48)
+# 
+# regions$`Country Name`
+# 
+# countries <- data %>% 
+#     select(`Country Name`, `Country Code`) %>% 
+#     distinct() %>% 
+#     slice(49:n())
+# 
+# head(countries)
+# 
+# # Available variables
+# indicators <- data %>% 
+#     select(`Indicator Name`, `Indicator Code`) %>% 
+#     distinct()
+# 
+# head(indicators)
+# 
+# # Division of variables by topic
+# series <- read_csv("data/Gender_StatsSeries.csv") %>% 
+#     select(1, 2, 3, 4, 6)
+# 
+# head(series)
+# 
+# unique(series$Topic)
+# 
+# vis.data <- data %>% 
+#     select(-c(1, 3)) %>% 
+#     pivot_longer(.,
+#         cols = -c(`Country Code`, `Indicator Code`),
+#         names_to = "Year",
+#         values_to = "Value") %>% 
+#     pivot_wider(.,
+#         names_from = `Indicator Code`,
+#         values_from = Value) %>% 
+#     mutate(Year = as.Date(Year, format = "%Y"))
+# 
+# head(vis.data)
+# 
+# rm(data)
+# save(list = ls(), file = "data/all")
 
-head(data)
-
-data[data$`Indicator Code` == "SG.GET.JOBS.EQ",] %>% 
-    filter(!is.na(`2010`)) %>% 
-    select(1, 2, 3, 4, 40, 41, 42, 43)
-
-# We see that data provides not only countries but also division depending on regions of world
-
-regions <- data %>% 
-    select(`Country Name`, `Country Code`) %>% 
-    distinct() %>% 
-    slice(1:48)
-
-regions$`Country Name`
-
-countries <- data %>% 
-    select(`Country Name`, `Country Code`) %>% 
-    distinct() %>% 
-    slice(49:n())
-
-head(countries)
-
-# Available variables
-indicators <- data %>% 
-    select(`Indicator Name`, `Indicator Code`) %>% 
-    distinct()
-
-head(indicators)
-
-# Division of variables by topic
-series <- read_csv("data/Gender_StatsSeries.csv") %>% 
-    select(1, 2, 3, 4, 6)
-
-head(series)
-
-unique(series$Topic)
-
-vis.data <- data %>% 
-    select(-c(1, 3)) %>% 
-    pivot_longer(.,
-        cols = -c(`Country Code`, `Indicator Code`),
-        names_to = "Year",
-        values_to = "Value") %>% 
-    pivot_wider(.,
-        names_from = `Indicator Code`,
-        values_from = Value) %>% 
-    mutate(Year = as.Date(Year, format = "%Y"))
-
-head(vis.data)
-
-vis.data %>% 
-    filter(!is.na(`SG.GET.JOBS.EQ`)) %>% 
-    select(1, 2, 3, 4, 40, 41, 42, 43)
-
+load("data/all")
 #### VISUALIZATION FOR WHOLE WORLD ####
 
 # Dataset only concerning world variables (filtering by country code)
@@ -158,10 +165,10 @@ age.vis <- regions.data %>%
     filter(sex != " total")
 
 age.vis.euro1 <- age.vis %>% 
-    filter(Year == "1960-01-11")
+    filter(year(Year) == 1960)
 
 age.vis.euro2 <- age.vis %>% 
-    filter(Year == "2020-01-11")
+    filter(year(Year) == 2020)
 
 ind <- paste(age.vis.euro1$`Country Name`[1], ": Population", year(age.vis.euro1$`Year`[1]))
 euro1 <- ggplot(age.vis.euro1, aes(x = Population, y = age, fill = factor(sex))) +
@@ -230,8 +237,15 @@ edu.vis <- countries.data %>%
     group_by(level, sex) %>% 
     summarise(Population = mean(Population)) %>% 
     ungroup() %>% 
-    arrange(Population) %>% 
-    mutate(fe = ifelse(sex == "female", 1, 0))
+    arrange(desc(Population)) %>% 
+    mutate(fe = ifelse(sex == "female", 1, 0)) %>% 
+    mutate(level = str_replace(level, " or equivalent", "")) %>% 
+    mutate(level = str_replace(level, "completed ", "")) %>% 
+    mutate(level2 = 2:17) %>% 
+    mutate(level2 = level2 %/% 2) %>% 
+    mutate(level = paste(as.character(level2), level))
+
+
 
 edu1 <- ggplot(edu.vis, aes(area = Population, fill = factor(sex), label = level, subgroup = fe, subgroup2 = level)) +
   scale_fill_manual(name = "Sex", labels = c("Women", "Men"), values = c("purple", "gray")) +
@@ -255,9 +269,9 @@ edu2 <- ggplot(edu.vis, aes(x = sex, y = level)) + # nowa baza danych
   scale_fill_gradient(low = "gray", high = "black") +
   theme_light() + 
   geom_text(aes(label = round(Population)), size = 5, fontface = 'bold', color = 'white') +
-  labs(title = "Educational attainment population 25+ \n(%) (cumulative) dependent on Sex") +
+  labs(title = "Educational attainment population 25+ (%) (cumulative)") +
   theme(panel.grid = element_blank())+
-  theme(plot.background = element_rect(fill = "#f7ede1"),
+  theme(plot.background = element_rect(fill = "#fce5cdff"),
         plot.title = element_text(size = 20, face = "bold"),
         text = element_text(size = 15))
 
