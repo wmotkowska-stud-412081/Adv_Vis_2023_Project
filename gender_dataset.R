@@ -131,8 +131,6 @@ ggplot(data = world.vis2, aes(x = Years_5, y = SH.MMR.RISK.ZS,
 
 ggsave(path = "plots", filename = "vis2.png")
 
-rm(list = ls(pattern = "world"))
-
 # VISUALIZATIONS FOR REGIONS
 
 regions.data <- vis.data %>% 
@@ -174,6 +172,8 @@ ind <- paste(age.vis.euro1$`Country Name`[1], ": Population", year(age.vis.euro1
 euro1 <- ggplot(age.vis.euro1, aes(x = Population, y = age, fill = factor(sex))) +
     scale_fill_manual(name = "Sex", labels = c("Women", "Men"), values = c("purple", "gray")) +
     geom_col() + coord_flip() + theme_minimal() +
+    scale_x_continuous(breaks = c(10000000, 20000000, 30000000),
+                       label = c("10 mln", "20 mln", "30 mln")) +    
     labs(title  = ind,
          y = "Age group")  +
     theme(legend.position = "top", 
@@ -188,6 +188,8 @@ euro2 <- ggplot(age.vis.euro2, aes(x = Population, y = age, fill = factor(sex)))
     geom_col() +
     coord_flip() + 
     theme_minimal() +
+        scale_x_continuous(breaks = c(10000000, 20000000, 30000000),
+                       label = c("10 mln", "20 mln", "30 mln")) +   
     labs(title  = ind,
          y = "Age group")  +
     theme(legend.position = "none", 
@@ -198,11 +200,6 @@ euro2 <- ggplot(age.vis.euro2, aes(x = Population, y = age, fill = factor(sex)))
 g <- arrangeGrob(euro1, euro2, nrow=2)
 
 ggsave(path = "plots", filename = "vis3.png", g)
-
-rm(list = ls(pattern = "age"))
-rm(list = ls(pattern = "euro"))
-rm(list = ls(pattern = "regions"))
-rm(g)
 
 
 # VISUALIZATIONS FOR COUNTRIES
@@ -276,9 +273,6 @@ edu2 <- ggplot(edu.vis, aes(x = sex, y = level)) + # nowa baza danych
         text = element_text(size = 15))
 
 ggsave(path = "plots", filename = "vis5.png")
-
-rm(list = ls(pattern = "edu"))
-rm(description, ind, g)
 
 # JOB RECRIUTMENT - MAP
 ###Recruitment process the same for women as for men across regions over time
